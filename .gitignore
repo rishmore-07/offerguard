@@ -1,0 +1,56 @@
+# Environment files
+.env
+.env.local
+*.env
+
+# Large Model Weights, Checkpoints & Archives (>100MB breaks GitHub push)
+*.safetensors
+*.bin
+*.tgz
+*.tar.gz
+*.pt
+*.zip
+ml/models/autoscientist_qwen3_5_2b/
+model_adapter/
+
+# Raw large datasets (>50MB)
+fake_job_postings.csv
+**/fake_job_postings.csv
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Node
+node_modules/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

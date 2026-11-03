@@ -1,0 +1,739 @@
+{
+  "model_name": "TF-IDF + Class-Weighted Logistic Regression",
+  "model_type": "Baseline Linear Classifier",
+  "hyperparameters": {
+    "tfidf_max_features": 15000,
+    "tfidf_ngram_range": [
+      1,
+      2
+    ],
+    "tfidf_sublinear_tf": true,
+    "classifier_class_weight": "balanced",
+    "classifier_C": 1.0,
+    "classifier_max_iter": 1000,
+    "classifier_solver": "lbfgs"
+  },
+  "optimal_decision_threshold": 0.62,
+  "splits": {
+    "validation_default_threshold": {
+      "split_name": "EMSCAD Validation (th=0.5)",
+      "sample_counts": {
+        "total": 2362,
+        "legitimate": 2255,
+        "fraudulent": 107,
+        "fraud_prevalence_pct": 4.53
+      },
+      "primary_kpis": {
+        "fraud_f1": 0.749,
+        "fraud_recall": 0.8785,
+        "fraud_precision": 0.6528,
+        "macro_f1": 0.8675,
+        "accuracy": 0.9733
+      },
+      "per_class": {
+        "FRAUDULENT": {
+          "precision": 0.6528,
+          "recall": 0.8785,
+          "f1_score": 0.749,
+          "support": 107
+        },
+        "LEGITIMATE": {
+          "precision": 0.9941,
+          "recall": 0.9778,
+          "f1_score": 0.9859,
+          "support": 2255
+        }
+      },
+      "confusion_matrix": {
+        "matrix": [
+          [
+            2205,
+            50
+          ],
+          [
+            13,
+            94
+          ]
+        ],
+        "true_negatives": 2205,
+        "false_positives": 50,
+        "false_negatives": 13,
+        "true_positives": 94,
+        "false_positive_rate": 0.0222,
+        "false_negative_rate": 0.1215
+      },
+      "summary": {
+        "macro_precision": 0.8235,
+        "macro_recall": 0.9282,
+        "macro_f1": 0.8675,
+        "weighted_f1": 0.9752
+      },
+      "probabilistic_metrics": {
+        "roc_auc": 0.9848,
+        "pr_auc": 0.8554,
+        "brier_score": 0.0294
+      }
+    },
+    "validation_tuned_threshold": {
+      "split_name": "EMSCAD Validation (Tuned th=0.62)",
+      "sample_counts": {
+        "total": 2362,
+        "legitimate": 2255,
+        "fraudulent": 107,
+        "fraud_prevalence_pct": 4.53
+      },
+      "primary_kpis": {
+        "fraud_f1": 0.8257,
+        "fraud_recall": 0.8411,
+        "fraud_precision": 0.8108,
+        "macro_f1": 0.9086,
+        "accuracy": 0.9839
+      },
+      "per_class": {
+        "FRAUDULENT": {
+          "precision": 0.8108,
+          "recall": 0.8411,
+          "f1_score": 0.8257,
+          "support": 107
+        },
+        "LEGITIMATE": {
+          "precision": 0.9924,
+          "recall": 0.9907,
+          "f1_score": 0.9916,
+          "support": 2255
+        }
+      },
+      "confusion_matrix": {
+        "matrix": [
+          [
+            2234,
+            21
+          ],
+          [
+            17,
+            90
+          ]
+        ],
+        "true_negatives": 2234,
+        "false_positives": 21,
+        "false_negatives": 17,
+        "true_positives": 90,
+        "false_positive_rate": 0.0093,
+        "false_negative_rate": 0.1589
+      },
+      "summary": {
+        "macro_precision": 0.9016,
+        "macro_recall": 0.9159,
+        "macro_f1": 0.9086,
+        "weighted_f1": 0.9841
+      },
+      "probabilistic_metrics": {
+        "roc_auc": 0.9848,
+        "pr_auc": 0.8554,
+        "brier_score": 0.0294
+      }
+    },
+    "test_real_emscad_default_threshold": {
+      "split_name": "EMSCAD Test (Real Holdout, th=0.5)",
+      "sample_counts": {
+        "total": 2363,
+        "legitimate": 2256,
+        "fraudulent": 107,
+        "fraud_prevalence_pct": 4.53
+      },
+      "primary_kpis": {
+        "fraud_f1": 0.7455,
+        "fraud_recall": 0.7664,
+        "fraud_precision": 0.7257,
+        "macro_f1": 0.8665,
+        "accuracy": 0.9763
+      },
+      "per_class": {
+        "FRAUDULENT": {
+          "precision": 0.7257,
+          "recall": 0.7664,
+          "f1_score": 0.7455,
+          "support": 107
+        },
+        "LEGITIMATE": {
+          "precision": 0.9889,
+          "recall": 0.9863,
+          "f1_score": 0.9876,
+          "support": 2256
+        }
+      },
+      "confusion_matrix": {
+        "matrix": [
+          [
+            2225,
+            31
+          ],
+          [
+            25,
+            82
+          ]
+        ],
+        "true_negatives": 2225,
+        "false_positives": 31,
+        "false_negatives": 25,
+        "true_positives": 82,
+        "false_positive_rate": 0.0137,
+        "false_negative_rate": 0.2336
+      },
+      "summary": {
+        "macro_precision": 0.8573,
+        "macro_recall": 0.8763,
+        "macro_f1": 0.8665,
+        "weighted_f1": 0.9766
+      },
+      "probabilistic_metrics": {
+        "roc_auc": 0.9674,
+        "pr_auc": 0.8237,
+        "brier_score": 0.0287
+      }
+    },
+    "test_real_emscad_tuned_threshold": {
+      "split_name": "EMSCAD Test (Real Holdout, Tuned th=0.62)",
+      "sample_counts": {
+        "total": 2363,
+        "legitimate": 2256,
+        "fraudulent": 107,
+        "fraud_prevalence_pct": 4.53
+      },
+      "primary_kpis": {
+        "fraud_f1": 0.7835,
+        "fraud_recall": 0.7103,
+        "fraud_precision": 0.8736,
+        "macro_f1": 0.8871,
+        "accuracy": 0.9822
+      },
+      "per_class": {
+        "FRAUDULENT": {
+          "precision": 0.8736,
+          "recall": 0.7103,
+          "f1_score": 0.7835,
+          "support": 107
+        },
+        "LEGITIMATE": {
+          "precision": 0.9864,
+          "recall": 0.9951,
+          "f1_score": 0.9907,
+          "support": 2256
+        }
+      },
+      "confusion_matrix": {
+        "matrix": [
+          [
+            2245,
+            11
+          ],
+          [
+            31,
+            76
+          ]
+        ],
+        "true_negatives": 2245,
+        "false_positives": 11,
+        "false_negatives": 31,
+        "true_positives": 76,
+        "false_positive_rate": 0.0049,
+        "false_negative_rate": 0.2897
+      },
+      "summary": {
+        "macro_precision": 0.93,
+        "macro_recall": 0.8527,
+        "macro_f1": 0.8871,
+        "weighted_f1": 0.9813
+      },
+      "probabilistic_metrics": {
+        "roc_auc": 0.9674,
+        "pr_auc": 0.8237,
+        "brier_score": 0.0287
+      }
+    },
+    "test_synthetic_india_default_threshold": {
+      "split_name": "Aioshi Synthetic Test (th=0.5)",
+      "sample_counts": {
+        "total": 120,
+        "legitimate": 45,
+        "fraudulent": 75,
+        "fraud_prevalence_pct": 62.5
+      },
+      "primary_kpis": {
+        "fraud_f1": 0.8177,
+        "fraud_recall": 0.9867,
+        "fraud_precision": 0.6981,
+        "macro_f1": 0.6292,
+        "accuracy": 0.725
+      },
+      "per_class": {
+        "FRAUDULENT": {
+          "precision": 0.6981,
+          "recall": 0.9867,
+          "f1_score": 0.8177,
+          "support": 75
+        },
+        "LEGITIMATE": {
+          "precision": 0.9286,
+          "recall": 0.2889,
+          "f1_score": 0.4407,
+          "support": 45
+        }
+      },
+      "confusion_matrix": {
+        "matrix": [
+          [
+            13,
+            32
+          ],
+          [
+            1,
+            74
+          ]
+        ],
+        "true_negatives": 13,
+        "false_positives": 32,
+        "false_negatives": 1,
+        "true_positives": 74,
+        "false_positive_rate": 0.7111,
+        "false_negative_rate": 0.0133
+      },
+      "summary": {
+        "macro_precision": 0.8133,
+        "macro_recall": 0.6378,
+        "macro_f1": 0.6292,
+        "weighted_f1": 0.6763
+      },
+      "probabilistic_metrics": {
+        "roc_auc": 0.9304,
+        "pr_auc": 0.9602,
+        "brier_score": 0.1676
+      }
+    },
+    "test_synthetic_india_tuned_threshold": {
+      "split_name": "Aioshi Synthetic Test (th=0.62)",
+      "sample_counts": {
+        "total": 120,
+        "legitimate": 45,
+        "fraudulent": 75,
+        "fraud_prevalence_pct": 62.5
+      },
+      "primary_kpis": {
+        "fraud_f1": 0.8457,
+        "fraud_recall": 0.9867,
+        "fraud_precision": 0.74,
+        "macro_f1": 0.7152,
+        "accuracy": 0.775
+      },
+      "per_class": {
+        "FRAUDULENT": {
+          "precision": 0.74,
+          "recall": 0.9867,
+          "f1_score": 0.8457,
+          "support": 75
+        },
+        "LEGITIMATE": {
+          "precision": 0.95,
+          "recall": 0.4222,
+          "f1_score": 0.5846,
+          "support": 45
+        }
+      },
+      "confusion_matrix": {
+        "matrix": [
+          [
+            19,
+            26
+          ],
+          [
+            1,
+            74
+          ]
+        ],
+        "true_negatives": 19,
+        "false_positives": 26,
+        "false_negatives": 1,
+        "true_positives": 74,
+        "false_positive_rate": 0.5778,
+        "false_negative_rate": 0.0133
+      },
+      "summary": {
+        "macro_precision": 0.845,
+        "macro_recall": 0.7044,
+        "macro_f1": 0.7152,
+        "weighted_f1": 0.7478
+      },
+      "probabilistic_metrics": {
+        "roc_auc": 0.9304,
+        "pr_auc": 0.9602,
+        "brier_score": 0.1676
+      }
+    }
+  },
+  "threshold_tuning_curve": [
+    {
+      "threshold": 0.2,
+      "precision": 0.2488,
+      "recall": 0.972,
+      "f1": 0.3962
+    },
+    {
+      "threshold": 0.22,
+      "precision": 0.2723,
+      "recall": 0.972,
+      "f1": 0.4254
+    },
+    {
+      "threshold": 0.24,
+      "precision": 0.2997,
+      "recall": 0.972,
+      "f1": 0.4581
+    },
+    {
+      "threshold": 0.26,
+      "precision": 0.3312,
+      "recall": 0.9626,
+      "f1": 0.4928
+    },
+    {
+      "threshold": 0.28,
+      "precision": 0.3529,
+      "recall": 0.9533,
+      "f1": 0.5152
+    },
+    {
+      "threshold": 0.3,
+      "precision": 0.3878,
+      "recall": 0.9533,
+      "f1": 0.5514
+    },
+    {
+      "threshold": 0.32,
+      "precision": 0.4073,
+      "recall": 0.9439,
+      "f1": 0.569
+    },
+    {
+      "threshold": 0.34,
+      "precision": 0.4323,
+      "recall": 0.9252,
+      "f1": 0.5893
+    },
+    {
+      "threshold": 0.36,
+      "precision": 0.4455,
+      "recall": 0.9159,
+      "f1": 0.5994
+    },
+    {
+      "threshold": 0.38,
+      "precision": 0.4778,
+      "recall": 0.9065,
+      "f1": 0.6258
+    },
+    {
+      "threshold": 0.4,
+      "precision": 0.5105,
+      "recall": 0.9065,
+      "f1": 0.6532
+    },
+    {
+      "threshold": 0.42,
+      "precision": 0.5419,
+      "recall": 0.9065,
+      "f1": 0.6783
+    },
+    {
+      "threshold": 0.44,
+      "precision": 0.5607,
+      "recall": 0.9065,
+      "f1": 0.6929
+    },
+    {
+      "threshold": 0.46,
+      "precision": 0.5915,
+      "recall": 0.9065,
+      "f1": 0.7159
+    },
+    {
+      "threshold": 0.48,
+      "precision": 0.6129,
+      "recall": 0.8879,
+      "f1": 0.7252
+    },
+    {
+      "threshold": 0.5,
+      "precision": 0.6528,
+      "recall": 0.8785,
+      "f1": 0.749
+    },
+    {
+      "threshold": 0.52,
+      "precision": 0.6765,
+      "recall": 0.8598,
+      "f1": 0.7572
+    },
+    {
+      "threshold": 0.54,
+      "precision": 0.7132,
+      "recall": 0.8598,
+      "f1": 0.7797
+    },
+    {
+      "threshold": 0.56,
+      "precision": 0.7339,
+      "recall": 0.8505,
+      "f1": 0.7879
+    },
+    {
+      "threshold": 0.58,
+      "precision": 0.7692,
+      "recall": 0.8411,
+      "f1": 0.8036
+    },
+    {
+      "threshold": 0.6,
+      "precision": 0.7895,
+      "recall": 0.8411,
+      "f1": 0.8145
+    },
+    {
+      "threshold": 0.62,
+      "precision": 0.8108,
+      "recall": 0.8411,
+      "f1": 0.8257
+    },
+    {
+      "threshold": 0.64,
+      "precision": 0.8431,
+      "recall": 0.8037,
+      "f1": 0.823
+    },
+    {
+      "threshold": 0.66,
+      "precision": 0.8416,
+      "recall": 0.7944,
+      "f1": 0.8173
+    },
+    {
+      "threshold": 0.68,
+      "precision": 0.8586,
+      "recall": 0.7944,
+      "f1": 0.8252
+    },
+    {
+      "threshold": 0.7,
+      "precision": 0.8737,
+      "recall": 0.7757,
+      "f1": 0.8218
+    },
+    {
+      "threshold": 0.72,
+      "precision": 0.8817,
+      "recall": 0.7664,
+      "f1": 0.82
+    },
+    {
+      "threshold": 0.74,
+      "precision": 0.8791,
+      "recall": 0.7477,
+      "f1": 0.8081
+    },
+    {
+      "threshold": 0.76,
+      "precision": 0.9048,
+      "recall": 0.7103,
+      "f1": 0.7958
+    },
+    {
+      "threshold": 0.78,
+      "precision": 0.9012,
+      "recall": 0.6822,
+      "f1": 0.7766
+    },
+    {
+      "threshold": 0.8,
+      "precision": 0.9079,
+      "recall": 0.6449,
+      "f1": 0.7541
+    },
+    {
+      "threshold": 0.82,
+      "precision": 0.9167,
+      "recall": 0.6168,
+      "f1": 0.7374
+    },
+    {
+      "threshold": 0.84,
+      "precision": 0.9265,
+      "recall": 0.5888,
+      "f1": 0.72
+    }
+  ],
+  "top_features": {
+    "fraud_indicative": [
+      {
+        "feature": "earn",
+        "weight": 3.7019
+      },
+      {
+        "feature": "using link",
+        "weight": 3.6946
+      },
+      {
+        "feature": "deposit",
+        "weight": 3.5635
+      },
+      {
+        "feature": "fee",
+        "weight": 3.3995
+      },
+      {
+        "feature": "apply using",
+        "weight": 3.3371
+      },
+      {
+        "feature": "link",
+        "weight": 3.1898
+      },
+      {
+        "feature": "pay",
+        "weight": 3.1305
+      },
+      {
+        "feature": "data entry",
+        "weight": 3.0888
+      },
+      {
+        "feature": "send",
+        "weight": 3.0125
+      },
+      {
+        "feature": "urgent",
+        "weight": 2.9496
+      },
+      {
+        "feature": "job posting",
+        "weight": 2.9378
+      },
+      {
+        "feature": "guaranteed",
+        "weight": 2.8728
+      },
+      {
+        "feature": "timejob",
+        "weight": 2.7772
+      },
+      {
+        "feature": "000",
+        "weight": 2.6489
+      },
+      {
+        "feature": "description apply",
+        "weight": 2.639
+      },
+      {
+        "feature": "posting",
+        "weight": 2.6222
+      },
+      {
+        "feature": "cash",
+        "weight": 2.5675
+      },
+      {
+        "feature": "entry",
+        "weight": 2.5259
+      },
+      {
+        "feature": "accion",
+        "weight": 2.4637
+      },
+      {
+        "feature": "work home",
+        "weight": 2.4137
+      }
+    ],
+    "legitimate_indicative": [
+      {
+        "feature": "company_profile",
+        "weight": -4.1455
+      },
+      {
+        "feature": "team",
+        "weight": -3.0262
+      },
+      {
+        "feature": "companies",
+        "weight": -2.7352
+      },
+      {
+        "feature": "official",
+        "weight": -2.7021
+      },
+      {
+        "feature": "growing",
+        "weight": -2.4785
+      },
+      {
+        "feature": "english",
+        "weight": -2.3996
+      },
+      {
+        "feature": "web",
+        "weight": -2.2939
+      },
+      {
+        "feature": "based",
+        "weight": -2.2053
+      },
+      {
+        "feature": "clients",
+        "weight": -2.1031
+      },
+      {
+        "feature": "careers",
+        "weight": -2.0853
+      },
+      {
+        "feature": "client",
+        "weight": -2.0515
+      },
+      {
+        "feature": "solutions",
+        "weight": -1.9766
+      },
+      {
+        "feature": "creative",
+        "weight": -1.9503
+      },
+      {
+        "feature": "love",
+        "weight": -1.9435
+      },
+      {
+        "feature": "right",
+        "weight": -1.9128
+      },
+      {
+        "feature": "years",
+        "weight": -1.8893
+      },
+      {
+        "feature": "digital",
+        "weight": -1.888
+      },
+      {
+        "feature": "new",
+        "weight": -1.8822
+      },
+      {
+        "feature": "world",
+        "weight": -1.8483
+      },
+      {
+        "feature": "candidate",
+        "weight": -1.8422
+      }
+    ]
+  }
+}

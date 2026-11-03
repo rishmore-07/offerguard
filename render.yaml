@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: offerguard-api
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: "pip install -r backend/requirements.txt"
+    startCommand: "python backend/run.py"
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: HOST
+        value: 0.0.0.0
+      - key: MODEL_PROVIDER
+        value: baseline
+      - key: AUTOSCIENTIST_API_URL
+        sync: false
+      - key: AUTOSCIENTIST_API_KEY
+        sync: false
+      - key: MODEL_TIMEOUT
+        value: 10.0
+

@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@theme {
+  --font-heading: 'Space Grotesk', system-ui, sans-serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --color-neo-bg: #FAF9F6;
+  --color-neo-dark: #111111;
+  --color-neo-pink: #F72585;
+  --color-neo-softpink: #FFD6E8;
+  --color-neo-lavender: #E9DDFF;
+  --color-neo-yellow: #FFE45E;
+}
+
+body {
+  background-color: #FAF9F6;
+  color: #111111;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, .font-heading {
+  font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+/* Neo-Brutalist Core Shadows */
+.neo-shadow {
+  box-shadow: 4px 4px 0px #111111;
+}
+
+.neo-shadow-sm {
+  box-shadow: 2px 2px 0px #111111;
+}
+
+.neo-shadow-lg {
+  box-shadow: 6px 6px 0px #111111;
+}
+
+.neo-shadow-xl {
+  box-shadow: 8px 8px 0px #111111;
+}
+
+.neo-btn {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.neo-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px #111111;
+}
+
+.neo-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px #111111;
+}
+
+/* Subtle neo grid pattern */
+.bg-neo-grid {
+  background-size: 24px 24px;
+  background-image: 
+    linear-gradient(to right, rgba(17, 17, 17, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(17, 17, 17, 0.05) 1px, transparent 1px);
+}
