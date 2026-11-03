@@ -106,6 +106,39 @@ export const ModelIntelligence: React.FC<ModelIntelligenceProps> = ({ modelInfo 
           </div>
         </div>
 
+        {modelInfo?.lora_evaluation?.accuracy_on_valid != null && (
+          <div className="bg-white border-2 border-[#111111] rounded-xl p-4 shadow-[3px_3px_0px_#111111] space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="font-heading font-black text-[#111111]">Held-out Qwen3.5-2B LoRA evaluation</h3>
+              <span className="text-[11px] font-mono font-bold border border-[#111111] rounded px-2 py-0.5">
+                {modelInfo.lora_evaluation.valid_predictions}/{modelInfo.lora_evaluation.rows_in_split} valid
+              </span>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+              <div>
+                <div className="text-[10px] font-mono uppercase text-[#666]">Accuracy</div>
+                <div className="text-xl font-black">{((modelInfo.lora_evaluation.accuracy_on_valid || 0) * 100).toFixed(1)}%</div>
+              </div>
+              <div>
+                <div className="text-[10px] font-mono uppercase text-[#666]">Fraud precision</div>
+                <div className="text-xl font-black">{((modelInfo.lora_evaluation.fraud_precision || 0) * 100).toFixed(1)}%</div>
+              </div>
+              <div>
+                <div className="text-[10px] font-mono uppercase text-[#666]">Fraud recall</div>
+                <div className="text-xl font-black">{((modelInfo.lora_evaluation.fraud_recall || 0) * 100).toFixed(1)}%</div>
+              </div>
+              <div>
+                <div className="text-[10px] font-mono uppercase text-[#666]">Fraud F1</div>
+                <div className="text-xl font-black">{((modelInfo.lora_evaluation.fraud_f1 || 0) * 100).toFixed(1)}%</div>
+              </div>
+            </div>
+            <p className="text-[11px] text-[#444]">
+              Confusion counts TN {modelInfo.lora_evaluation.tn ?? '—'}, FP {modelInfo.lora_evaluation.fp ?? '—'}, FN {modelInfo.lora_evaluation.fn ?? '—'}, TP {modelInfo.lora_evaluation.tp ?? '—'}.
+              These figures are measured predictions. The Adaption search win rate is not model accuracy. A LEGITIMATE label is not proof an employer is genuine.
+            </p>
+          </div>
+        )}
+
         {/* Scientific Rigor Guarantee Notice */}
         <div className="bg-[#FFD6E8] border-2 border-[#111111] rounded-xl p-3.5 text-xs text-[#111111] font-medium flex items-start space-x-2.5 shadow-[2px_2px_0px_#111111]">
           <Info className="w-4 h-4 text-[#F72585] shrink-0 mt-0.5" />

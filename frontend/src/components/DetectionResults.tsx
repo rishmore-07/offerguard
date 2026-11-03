@@ -29,7 +29,7 @@ export const DetectionResults: React.FC<DetectionResultsProps> = ({ result, rawT
     const textToCopy = `OFFERGUARD AI RECRUITMENT ANALYSIS REPORT
 Status: ${result.prediction} (${result.risk_level} RISK - ${result.risk_score}/100)
 Model: ${result.model_status}
-Confidence: ${result.confidence ? `${(result.confidence * 100).toFixed(1)}%` : 'N/A (Empirical Heuristic Engine)'}
+Confidence: ${result.confidence != null ? `${(result.confidence * 100).toFixed(1)}%` : 'Not reported'}
 
 DETECTED RED FLAGS:
 ${result.signals.length > 0 ? result.signals.map(s => `• [${s.severity}] ${s.signal}: "${s.matched_text}"`).join('\n') : '• No signature scam patterns detected.'}
@@ -118,8 +118,8 @@ ${result.disclaimer}`;
 
               <p className="text-xs sm:text-sm text-[#222] font-medium leading-relaxed max-w-xl">
                 {isFraud
-                  ? 'High probability of recruitment fraud detected. The offer contains signature patterns typical of advance-fee schemes, unauthorized gate-pass demands, or corporate impersonation.'
-                  : 'Lower-risk patterns detected. The listing text aligns with standard corporate recruitment format. (Note: AI classification is advisory, not legal verification of company identity).'}
+                  ? 'The classifier labeled this offer FRAUDULENT. Review the extracted signals before you act. This is a risk prediction, not confirmation that a payment or employer is criminal.'
+                  : 'The classifier labeled this offer LEGITIMATE. That is not independent verification that the employer is genuine. Confirm the role through the company’s own careers channel.'}
               </p>
             </div>
           </div>
@@ -142,7 +142,7 @@ ${result.disclaimer}`;
               </span>
             ) : (
               <span className="text-[11px] font-mono text-[#666] block mt-1">
-                Calibrated Signal Rules
+                {result.is_demo_mode ? 'Heuristic check' : 'Model confidence not reported'}
               </span>
             )}
           </div>

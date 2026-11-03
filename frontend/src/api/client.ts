@@ -5,7 +5,15 @@ import type {
   ModelInfoResponse
 } from '../types';
 
-const API_BASE = '/api';
+function resolveApiBase(): string {
+  const raw = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/$/, '');
+  if (raw === '/api' || raw.endsWith('/api')) {
+    return raw;
+  }
+  return `${raw}/api`;
+}
+
+const API_BASE = resolveApiBase();
 
 export async function analyzeJob(
   text: string,
