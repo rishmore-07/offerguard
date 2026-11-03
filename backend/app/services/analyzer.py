@@ -88,27 +88,12 @@ async def analyze_job_offer(request: JobAnalysisRequest) -> JobAnalysisResponse:
     signals = extract_suspicious_signals(cleaned_text)
     prediction, confidence, base_risk, model_metadata = await inference_adapter.predict(cleaned_text)
 
-    signal_score = signal_severity_score(signals)
-    if model_metadata.provider == "Adaption AutoScientist":
-        # The displayed class is the trained model's label. Signal scores stay separate.
-        final_prediction = prediction
-        risk_score = signal_score
-    else:
-        risk_score = base_risk if base_risk is not None else signal_score
-        if any(s.severity == "CRITICAL" for s in signals):
-            risk_score = max(risk_score, 88.0)
-        elif any(s.severity == "HIGH" for s in signals):
-            risk_score = max(risk_score, 70.0)
-        elif len([s for s in signals if s.severity == "MEDIUM"]) >= 2:
-            risk_score = max(risk_score, 55.0)
-
+    # The class and the threat index both come from the trained classifier.
+    # Extracted signals stay visible as separate evidence and do not change the label.
+    final_prediction = prediction
+    risk_score = base_risk if base_risk is not None else signal_severity_score(signals)
     risk_score = min(99.9, max(0.1, round(risk_score, 1)))
     risk_level = risk_level_for(risk_score)
-    if model_metadata.provider != "Adaption AutoScientist":
-        if risk_level in {"CRITICAL", "HIGH"}:
-            final_prediction = "FRAUDULENT"
-        else:
-            final_prediction = prediction
 
     # 5. Formulate Steps & Recommendations
     verification_steps = generate_verification_steps(signals, request.company or "")

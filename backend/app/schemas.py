@@ -79,6 +79,7 @@ class ModelInfoResponse(BaseModel):
     dataset_overview: Dict[str, Any]
     baseline_metrics: Optional[Dict[str, Any]]
     lora_evaluation: Optional[Dict[str, Any]] = None
+    lightweight_holdout: Optional[Dict[str, Any]] = None
     evaluation_methodology: str
 
 

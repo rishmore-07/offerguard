@@ -157,6 +157,23 @@ export interface ModelInfoResponse {
     classes: string[];
   };
   baseline_metrics?: ModelMetricsResponse | null;
+  lightweight_holdout?: {
+    independence_verified?: boolean;
+    metrics?: {
+      rows?: number;
+      accuracy?: number;
+      fraud_precision?: number;
+      fraud_recall?: number;
+      fraud_f1?: number;
+      macro_f1?: number;
+      tn?: number;
+      fp?: number;
+      fn?: number;
+      tp?: number;
+    };
+    latency_seconds?: { mean?: number; p95?: number };
+    provenance?: { independence_verified?: boolean };
+  } | null;
   lora_evaluation?: {
     split?: string;
     rows_in_split?: number;

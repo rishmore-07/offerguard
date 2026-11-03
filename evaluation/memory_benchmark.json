@@ -1,0 +1,18 @@
+{
+  "pid": 21440,
+  "python": "3.13.11 (tags/v3.13.11:6278944, Dec  5 2025, 16:26:58) [MSC v.1944 64 bit (AMD64)]",
+  "port": 8765,
+  "thread_limits": "OMP/OPENBLAS/MKL/NUMEXPR = 1",
+  "health_model_ready": true,
+  "health_demo_mode": false,
+  "sample_prediction": "FRAUDULENT",
+  "sample_is_demo_mode": false,
+  "working_set_bytes": 190025728,
+  "peak_working_set_bytes": 190025728,
+  "peak_working_set_mb": 181.22,
+  "working_set_mb": 181.22,
+  "samples": 20,
+  "render_free_limit_mb": 512,
+  "target_mb": 400,
+  "under_target": true
+}

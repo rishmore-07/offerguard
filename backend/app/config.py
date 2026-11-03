@@ -17,12 +17,10 @@ DEFAULT_METRICS_PATH = PROJECT_ROOT / "ml" / "metrics" / "baseline_evaluation.js
 MODEL_PATH = Path(os.getenv("OFFERGUARD_MODEL_PATH", str(DEFAULT_MODEL_PATH)))
 METRICS_PATH = Path(os.getenv("OFFERGUARD_METRICS_PATH", str(DEFAULT_METRICS_PATH)))
 
-# Inference Provider Configuration
-# Supported values:
-#   "baseline": Uses local scikit-learn TF-IDF + Logistic Regression model
-#   "autoscientist": Calls remote Adaption AutoScientist API endpoint
-#   "demo": Pure heuristic rule-based demo mode without trained weights
-MODEL_PROVIDER = os.getenv("MODEL_PROVIDER", "baseline").lower()
+# Production inference always uses the saved TF-IDF logistic regression.
+# MODEL_PROVIDER is retained so older environment files do not crash, and it
+# cannot switch serving to the LoRA checkpoint or to heuristic rules.
+MODEL_PROVIDER = "baseline"
 
 # Adaption Labs AutoScientist & Hosted Inference API
 ADAPTION_API_KEY = os.getenv("ADAPTION_API_KEY", os.getenv("AUTOSCIENTIST_API_KEY", ""))

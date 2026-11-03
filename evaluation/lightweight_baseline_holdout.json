@@ -1,0 +1,125 @@
+{
+  "model_file": "ml/models/offerguard_baseline.joblib",
+  "model_bytes": 756392,
+  "sklearn_runtime": "1.9.1",
+  "estimator": {
+    "vectorizer": "TfidfVectorizer",
+    "max_features": 15000,
+    "ngram_range": [
+      1,
+      2
+    ],
+    "stop_words": "english",
+    "sublinear_tf": true,
+    "min_df": 2,
+    "vocabulary_size": 15000,
+    "classifier": "LogisticRegression",
+    "classes": [
+      0,
+      1
+    ],
+    "class_weight": "balanced",
+    "C": 1.0,
+    "solver": "lbfgs",
+    "penalty": "deprecated",
+    "intercept": -0.2774517563835244,
+    "label_mapping": {
+      "0": "LEGITIMATE",
+      "1": "FRAUDULENT"
+    },
+    "decision_rule": "FRAUDULENT if P(class=1) >= optimal_threshold",
+    "optimal_threshold": 0.62,
+    "preprocessing": "Strip the fixed classification prompt prefix, then the saved TF-IDF word analyzer."
+  },
+  "provenance": {
+    "training_script": "ml/baseline.py",
+    "documented_training_file": "ml/data/offerguard_train.csv",
+    "training_file_present": true,
+    "documented_validation_rows": 2362,
+    "documented_emscad_test_rows": 2363,
+    "current_clean_test_rows": 2291,
+    "training_overlap_with_clean_test": 0,
+    "threshold_validation_overlap_with_clean_test": 0,
+    "independence_verified": true,
+    "reason": "Normalized instruction text from ml/data/offerguard_train.csv (11,502 rows) and ml/data/offerguard_validation.csv (2,362 rows) has zero overlap with offerguard_clean_test.csv. The saved 0.62 threshold was selected on that validation file, not on this test file.",
+    "overlap_among_files_on_disk": {
+      "ml/data/offerguard_train.csv": {
+        "rows": 11502,
+        "unique_texts": 11502,
+        "overlap_with_clean_test": 0
+      },
+      "ml/data/offerguard_validation.csv": {
+        "rows": 2362,
+        "unique_texts": 2362,
+        "overlap_with_clean_test": 0
+      },
+      "ml/data/offerguard_test.csv": {
+        "rows": 2363,
+        "unique_texts": 2363,
+        "overlap_with_clean_test": 0
+      },
+      "offerguard_adaption_train.csv": {
+        "rows": 2596,
+        "unique_texts": 2596,
+        "overlap_with_clean_test": 0
+      },
+      "offerguard_validation.csv": {
+        "rows": 1032,
+        "unique_texts": 1032,
+        "overlap_with_clean_test": 0
+      },
+      "offerguard_clean_test.csv": {
+        "rows": 2291,
+        "unique_texts": 2291,
+        "overlap_with_clean_test": 2291
+      },
+      "ml/data/offerguard_india_synthetic_test.csv": {
+        "rows": 120,
+        "unique_texts": 120,
+        "overlap_with_clean_test": 0
+      },
+      "OfferGuard_India/offerguard_india_synthetic_test.csv": {
+        "rows": 120,
+        "unique_texts": 120,
+        "overlap_with_clean_test": 0
+      }
+    },
+    "batched_feature_rows": 2291,
+    "batched_feature_columns": 15000
+  },
+  "metrics": {
+    "rows": 2291,
+    "fraud_support": 106,
+    "legitimate_support": 2185,
+    "accuracy": 0.981230903535574,
+    "fraud_precision": 0.8539325842696629,
+    "fraud_recall": 0.7169811320754716,
+    "fraud_f1": 0.7794871794871795,
+    "macro_f1": 0.8848427463426324,
+    "confusion_matrix_labels": [
+      "LEGITIMATE",
+      "FRAUDULENT"
+    ],
+    "confusion_matrix": [
+      [
+        2172,
+        13
+      ],
+      [
+        30,
+        76
+      ]
+    ],
+    "tn": 2172,
+    "fp": 13,
+    "fn": 30,
+    "tp": 76
+  },
+  "latency_seconds": {
+    "method": "per-example TF-IDF transform plus predict_proba, time.perf_counter",
+    "mean": 0.0007208880837494527,
+    "p50": 0.0006521000032080337,
+    "p95": 0.0012565500001073815,
+    "max": 0.002124200007528998
+  }
+}

@@ -1,6 +1,7 @@
-# Free-tier Render layout. The Qwen3.5-2B LoRA weights are not in Git.
-# This API stays honest: it reports the trained model as not ready until a
-# host with enough memory is actually running inference.
+# Render Free blueprint for OfferGuard.
+# The production API serves ml/models/offerguard_baseline.joblib only.
+# Do not install backend/requirements-inference.txt on this plan:
+# that file is for local Qwen LoRA evaluation and does not fit in 512 MB.
 services:
   - type: web
     name: offerguard-api
@@ -13,20 +14,50 @@ services:
     envVars:
       - key: HOST
         value: 0.0.0.0
-      - key: MODEL_PROVIDER
-        value: autoscientist
-      - key: MODEL_TIMEOUT
-        value: "60"
       - key: PYTHON_VERSION
         value: "3.12.8"
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: OMP_NUM_THREADS
+        value: "1"
+      - key: OPENBLAS_NUM_THREADS
+        value: "1"
+      - key: MKL_NUM_THREADS
+        value: "1"
+      - key: NUMEXPR_NUM_THREADS
+        value: "1"
+      - key: MODEL_PROVIDER
+        value: baseline
+      - key: OFFERGUARD_MODEL_PATH
+        value: ml/models/offerguard_baseline.joblib
       - key: CORS_ORIGINS
-        sync: false
+        fromService:
+          name: offerguard-web
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
 
   - type: web
     name: offerguard-web
     runtime: static
     buildCommand: cd frontend && npm ci && npm run build
     staticPublishPath: frontend/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: no-referrer
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
     envVars:
       - key: NODE_VERSION
         value: "22"

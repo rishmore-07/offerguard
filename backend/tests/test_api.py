@@ -36,6 +36,8 @@ class TestOfferGuardBackend(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         data = resp.json()
         self.assertEqual(data["prediction"], "FRAUDULENT")
+        self.assertFalse(data["is_demo_mode"])
+        self.assertIsNotNone(data["confidence"])
         self.assertEqual(data["risk_level"], "CRITICAL")
         self.assertGreaterEqual(data["risk_score"], 80.0)
         self.assertGreater(len(data["signals"]), 0)
@@ -59,6 +61,7 @@ class TestOfferGuardBackend(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         data = resp.json()
         self.assertEqual(data["prediction"], "LEGITIMATE")
+        self.assertFalse(data["is_demo_mode"])
         self.assertIn(data["risk_level"], ["LOW", "MODERATE"])
         self.assertLess(data["risk_score"], 50.0)
 
@@ -107,7 +110,24 @@ class TestOfferGuardBackend(unittest.TestCase):
         self.assertIn("autoscientist_status", data)
         self.assertTrue(data["autoscientist_status"])
         self.assertNotIn("63.5", data["autoscientist_status"])
+        self.assertIn("not the production classifier", data["autoscientist_status"])
         self.assertIn("baseline_metrics", data)
+        self.assertEqual(data["lightweight_holdout"]["metrics"]["rows"], 2291)
+        self.assertTrue(data["lightweight_holdout"]["provenance"]["independence_verified"])
+
+    def test_readiness_requires_loaded_classifier(self):
+        resp = self.client.get("/api/ready")
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.json()["ready"])
+
+    def test_missing_classifier_does_not_use_heuristics(self):
+        import asyncio
+        from backend.app.services.inference_adapter import ModelInferenceAdapter, ModelNotReady
+
+        adapter = ModelInferenceAdapter.__new__(ModelInferenceAdapter)
+        adapter.baseline_bundle = None
+        with self.assertRaises(ModelNotReady):
+            asyncio.run(adapter.predict("Pay a registration fee by UPI to get this job immediately."))
 
     def test_samples_endpoint(self):
         resp = self.client.get("/api/samples")

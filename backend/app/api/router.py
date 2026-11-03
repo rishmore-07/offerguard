@@ -7,7 +7,7 @@ from collections import defaultdict
 from typing import List, Dict, Any
 from fastapi import APIRouter, HTTPException, Request
 
-from backend.app.config import METRICS_PATH, MODEL_PROVIDER, PROJECT_ROOT, RATE_LIMIT_PER_MINUTE
+from backend.app.config import METRICS_PATH, PROJECT_ROOT, RATE_LIMIT_PER_MINUTE
 from backend.app.schemas import (
     JobAnalysisRequest,
     JobAnalysisResponse,
@@ -24,6 +24,7 @@ from backend.app.services.session_store import session_store
 _rate_lock = threading.Lock()
 _rate_hits: dict[str, list[float]] = defaultdict(list)
 LORA_EVAL_PATH = PROJECT_ROOT / "evaluation" / "evaluation_results.json"
+LIGHTWEIGHT_EVAL_PATH = PROJECT_ROOT / "evaluation" / "lightweight_baseline_holdout.json"
 
 
 def enforce_rate_limit(request: Request) -> None:
@@ -38,12 +39,7 @@ def enforce_rate_limit(request: Request) -> None:
 
 
 def model_is_ready() -> bool:
-    if MODEL_PROVIDER == "autoscientist":
-        from backend.app.services.lora_predictor import local_lora_predictor
-        return bool(local_lora_predictor.is_loaded and local_lora_predictor.inference_verified)
-    if MODEL_PROVIDER == "baseline":
-        return inference_adapter.baseline_bundle is not None
-    return False
+    return inference_adapter.baseline_bundle is not None
 
 logger = logging.getLogger("OfferGuard-API")
 router = APIRouter()
@@ -238,7 +234,6 @@ def get_model_info():
         "classes": ["LEGITIMATE", "FRAUDULENT"]
     }
 
-    # AutoScientist run status based on actual verification
     lora_evaluation = None
     if LORA_EVAL_PATH.exists():
         try:
@@ -247,14 +242,20 @@ def get_model_info():
         except Exception:
             logger.warning("Could not read LoRA evaluation results")
 
-    if model_is_ready() and meta.provider == "Adaption AutoScientist":
-        autoscientist_status = "Trained Qwen3.5-2B LoRA inference verified"
-    elif getattr(inference_adapter, "has_lora_weights", False):
-        autoscientist_status = "Trained LoRA checkpoint present; inference is not hosted on this service"
-    elif lora_evaluation and lora_evaluation.get("complete"):
-        autoscientist_status = "Held-out evaluation measured locally. This service does not have the model weights loaded."
+    lightweight_holdout = None
+    if LIGHTWEIGHT_EVAL_PATH.exists():
+        try:
+            with open(LIGHTWEIGHT_EVAL_PATH, "r", encoding="utf-8") as handle:
+                lightweight_holdout = json.load(handle)
+        except Exception:
+            logger.warning("Could not read lightweight holdout evaluation")
+
+    if lora_evaluation and lora_evaluation.get("complete"):
+        autoscientist_status = (
+            "Qwen3.5-2B LoRA evaluation is stored locally. It is not the production classifier."
+        )
     else:
-        autoscientist_status = "Awaiting trained model"
+        autoscientist_status = "No completed Qwen evaluation is stored. Production uses the TF-IDF logistic regression."
 
     return ModelInfoResponse(
         active_provider=meta.provider,
@@ -264,5 +265,10 @@ def get_model_info():
         dataset_overview=dataset_overview,
         baseline_metrics=baseline_data,
         lora_evaluation=lora_evaluation,
-        evaluation_methodology="Held-out labels are never model inputs. LoRA metrics come only from completed deterministic predictions. The Adaption win rate is not accuracy."
+        lightweight_holdout=lightweight_holdout,
+        evaluation_methodology=(
+            "Live predictions come only from the saved TF-IDF logistic regression. "
+            "Its 2,291-row metrics are a separate measurement from the Qwen3.5-2B LoRA evaluation. "
+            "The Adaption win rate is not accuracy."
+        ),
     )

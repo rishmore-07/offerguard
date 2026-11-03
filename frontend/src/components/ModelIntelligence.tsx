@@ -17,6 +17,7 @@ export const ModelIntelligence: React.FC<ModelIntelligenceProps> = ({ modelInfo 
   const [useTunedThreshold, setUseTunedThreshold] = useState<boolean>(true);
 
   const baseline = modelInfo?.baseline_metrics;
+  const holdout = modelInfo?.lightweight_holdout?.metrics;
   const optimalTh = baseline?.optimal_decision_threshold || 0.62;
 
   const emscadSplit = useTunedThreshold
@@ -47,13 +48,13 @@ export const ModelIntelligence: React.FC<ModelIntelligenceProps> = ({ modelInfo 
           <div className="flex items-center space-x-2 bg-white px-3 py-1.5 rounded-xl border-2 border-[#111111] shadow-[2px_2px_0px_#111111]">
             <span className="text-xs font-bold text-[#666]">Active Engine:</span>
             <span className="text-xs font-mono font-black text-[#F72585]">
-              {modelInfo?.active_provider || 'Local Baseline'}
+              {modelInfo?.model_name || 'TF-IDF Logistic Regression'}
             </span>
           </div>
         </div>
 
         <p className="text-xs sm:text-sm text-[#222] font-medium leading-relaxed max-w-3xl">
-          Scientific transparency into our supervised datasets, leakage prevention safeguards, baseline classifier benchmarks, and zero-downtime AutoScientist fine-tuning integration.
+          Live scans use the saved TF-IDF logistic regression. The Qwen3.5-2B LoRA numbers below are a separate local evaluation and are not used for predictions.
         </p>
       </div>
 
@@ -69,7 +70,7 @@ export const ModelIntelligence: React.FC<ModelIntelligenceProps> = ({ modelInfo 
                 Adaption Labs AutoScientist Model Status
               </h2>
               <p className="text-xs text-[#555] font-medium">
-                Supervised instruction tuning on 11,502 curated examples with exact labels: LEGITIMATE & FRAUDULENT
+                Stored for comparison. This checkpoint does not serve live predictions.
               </p>
             </div>
           </div>
@@ -90,18 +91,18 @@ export const ModelIntelligence: React.FC<ModelIntelligenceProps> = ({ modelInfo 
           </div>
 
           <div className="bg-[#FAF9F6] p-4 rounded-xl border-2 border-[#111111] shadow-[3px_3px_0px_#111111] space-y-1.5">
-            <span className="text-[#666] uppercase font-mono font-bold text-[10px]">2. Inference Profile</span>
-            <div className="font-heading font-black text-sm text-[#111111]">Zero-Reasoning Deterministic Mode</div>
+            <span className="text-[#666] uppercase font-mono font-bold text-[10px]">2. Production Classifier</span>
+            <div className="font-heading font-black text-sm text-[#111111]">TF-IDF + Logistic Regression</div>
             <p className="text-[#444] text-[11px] leading-relaxed">
-              Configured for binary classification to guarantee ultra-fast sub-second response without unnecessary conversational token cost.
+              15,000 word unigrams and bigrams, class-weighted logistic regression, decision threshold 0.62. Every live label comes from this model.
             </p>
           </div>
 
           <div className="bg-[#FAF9F6] p-4 rounded-xl border-2 border-[#111111] shadow-[3px_3px_0px_#111111] space-y-1.5">
-            <span className="text-[#666] uppercase font-mono font-bold text-[10px]">3. Modular Adapter</span>
-            <div className="font-heading font-black text-sm text-[#111111]">Hot-Swappable Endpoint</div>
+            <span className="text-[#666] uppercase font-mono font-bold text-[10px]">3. What Is Not Served</span>
+            <div className="font-heading font-black text-sm text-[#111111]">No LoRA and no demo rules</div>
             <p className="text-[#444] text-[11px] leading-relaxed">
-              Configurable via backend environment variable (<code className="text-indigo-700 font-mono font-bold">AUTOSCIENTIST_API_URL</code>) without changing the frontend interface.
+              The API returns 503 if the joblib classifier is missing. It does not fall back to heuristic rules or the Qwen checkpoint.
             </p>
           </div>
         </div>
@@ -134,7 +135,7 @@ export const ModelIntelligence: React.FC<ModelIntelligenceProps> = ({ modelInfo 
             </div>
             <p className="text-[11px] text-[#444]">
               Confusion counts TN {modelInfo.lora_evaluation.tn ?? '—'}, FP {modelInfo.lora_evaluation.fp ?? '—'}, FN {modelInfo.lora_evaluation.fn ?? '—'}, TP {modelInfo.lora_evaluation.tp ?? '—'}.
-              These figures are measured predictions. The Adaption search win rate is not model accuracy. A LEGITIMATE label is not proof an employer is genuine.
+              These figures belong to the Qwen3.5-2B LoRA evaluation only. They are not the logistic-regression result. The Adaption search win rate is not model accuracy.
             </p>
           </div>
         )}
@@ -143,7 +144,7 @@ export const ModelIntelligence: React.FC<ModelIntelligenceProps> = ({ modelInfo 
         <div className="bg-[#FFD6E8] border-2 border-[#111111] rounded-xl p-3.5 text-xs text-[#111111] font-medium flex items-start space-x-2.5 shadow-[2px_2px_0px_#111111]">
           <Info className="w-4 h-4 text-[#F72585] shrink-0 mt-0.5" />
           <p className="leading-relaxed">
-            <strong>Scientific Rigor Guarantee:</strong> AutoScientist metrics will be populated directly from test holdout evaluation when training completes. We never fake accuracy scores, synthetic training metrics, or verified employment status.
+            <strong>Separate evaluations:</strong> The Qwen card above is the completed local LoRA measurement. It is not the model answering scans. A LEGITIMATE label is not proof an employer is genuine.
           </p>
         </div>
       </div>
@@ -183,6 +184,41 @@ export const ModelIntelligence: React.FC<ModelIntelligenceProps> = ({ modelInfo 
               </button>
             </div>
           </div>
+
+          {holdout && (
+            <div className="bg-white border-2 sm:border-3 border-[#111111] rounded-2xl p-6 shadow-[6px_6px_0px_#111111] space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b-2 border-[#111111] pb-3">
+                <h3 className="text-sm font-heading font-black text-[#111111]">
+                  Production model on offerguard_clean_test.csv (N = {holdout.rows})
+                </h3>
+                <span className="text-xs font-mono font-black bg-[#FFE45E] text-[#111111] px-2.5 py-0.5 rounded border border-[#111111]">
+                  TF-IDF logistic regression, not the Qwen LoRA
+                </span>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+                <div>
+                  <div className="text-[10px] font-mono uppercase text-[#666]">Accuracy</div>
+                  <div className="text-xl font-black">{((holdout.accuracy || 0) * 100).toFixed(2)}%</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-mono uppercase text-[#666]">Fraud precision</div>
+                  <div className="text-xl font-black">{((holdout.fraud_precision || 0) * 100).toFixed(2)}%</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-mono uppercase text-[#666]">Fraud recall</div>
+                  <div className="text-xl font-black">{((holdout.fraud_recall || 0) * 100).toFixed(2)}%</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-mono uppercase text-[#666]">Fraud F1</div>
+                  <div className="text-xl font-black">{((holdout.fraud_f1 || 0) * 100).toFixed(2)}%</div>
+                </div>
+              </div>
+              <p className="text-[11px] text-[#444]">
+                Macro F1 {((holdout.macro_f1 || 0) * 100).toFixed(2)}%. Confusion counts TN {holdout.tn ?? '—'}, FP {holdout.fp ?? '—'}, FN {holdout.fn ?? '—'}, TP {holdout.tp ?? '—'}.
+                Training text overlap with this file was 0. The older EMSCAD table below is a different split.
+              </p>
+            </div>
+          )}
 
           {/* Benchmark Table Card */}
           {emscadSplit && (
@@ -282,7 +318,7 @@ export const ModelIntelligence: React.FC<ModelIntelligenceProps> = ({ modelInfo 
                 </span>
               </div>
               <p className="text-xs text-[#555] font-medium leading-relaxed">
-                Evaluated separately to prevent conflating synthetic data with real-world distribution. The model achieves 98.7% recall on handcrafted Indian scam patterns (such as INR advance deposits and WhatsApp redirections).
+                This synthetic file is scored on its own, apart from the EMSCAD and clean-test tables. Its fraud recall is the number in the line above.
               </p>
             </div>
           )}
