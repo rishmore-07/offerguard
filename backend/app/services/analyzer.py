@@ -57,46 +57,58 @@ def generate_safety_recommendations(risk_level: str, signals: List[SuspiciousSig
     return recs
 
 
-async def analyze_job_offer(request: JobAnalysisRequest) -> JobAnalysisResponse:
-    # 1. Clean and prepare text
-    cleaned_text = sanitize_input(request.text)
-
-    # 2. Extract Transparent Suspicious Signals (Rule-Based Analyzer)
-    signals = extract_suspicious_signals(cleaned_text)
-
-    # 3. Model Inference (Modular Adapter)
-    prediction, confidence, base_risk, model_metadata = await inference_adapter.predict(cleaned_text)
-
-    # 4. Calibrated Ensemble Risk Scoring
-    risk_score = base_risk
-
-    # Incorporate signal severity penalties
+def signal_severity_score(signals: List[SuspiciousSignal]) -> float:
+    """Evidence index from extracted patterns. This is not a model confidence score."""
     critical_signals = [s for s in signals if s.severity == "CRITICAL"]
     high_signals = [s for s in signals if s.severity == "HIGH"]
     medium_signals = [s for s in signals if s.severity == "MEDIUM"]
-
     if critical_signals:
-        risk_score = max(risk_score, 88.0 + (len(critical_signals) - 1) * 4.0)
-    elif high_signals:
-        risk_score = max(risk_score, 70.0 + (len(high_signals) - 1) * 5.0)
-    elif len(medium_signals) >= 2:
-        risk_score = max(risk_score, 55.0)
+        return min(99.0, 88.0 + (len(critical_signals) - 1) * 4.0)
+    if high_signals:
+        return min(99.0, 70.0 + (len(high_signals) - 1) * 5.0)
+    if len(medium_signals) >= 2:
+        return 55.0
+    if medium_signals:
+        return 35.0
+    return 8.0
+
+
+def risk_level_for(score: float) -> str:
+    if score >= 80.0:
+        return "CRITICAL"
+    if score >= 60.0:
+        return "HIGH"
+    if score >= 40.0:
+        return "MODERATE"
+    return "LOW"
+
+
+async def analyze_job_offer(request: JobAnalysisRequest) -> JobAnalysisResponse:
+    cleaned_text = request.text.strip()
+    signals = extract_suspicious_signals(cleaned_text)
+    prediction, confidence, base_risk, model_metadata = await inference_adapter.predict(cleaned_text)
+
+    signal_score = signal_severity_score(signals)
+    if model_metadata.provider == "Adaption AutoScientist":
+        # The displayed class is the trained model's label. Signal scores stay separate.
+        final_prediction = prediction
+        risk_score = signal_score
+    else:
+        risk_score = base_risk if base_risk is not None else signal_score
+        if any(s.severity == "CRITICAL" for s in signals):
+            risk_score = max(risk_score, 88.0)
+        elif any(s.severity == "HIGH" for s in signals):
+            risk_score = max(risk_score, 70.0)
+        elif len([s for s in signals if s.severity == "MEDIUM"]) >= 2:
+            risk_score = max(risk_score, 55.0)
 
     risk_score = min(99.9, max(0.1, round(risk_score, 1)))
-
-    # Determine risk level
-    if risk_score >= 80.0:
-        risk_level = "CRITICAL"
-        final_prediction = "FRAUDULENT"
-    elif risk_score >= 60.0:
-        risk_level = "HIGH"
-        final_prediction = "FRAUDULENT"
-    elif risk_score >= 40.0:
-        risk_level = "MODERATE"
-        final_prediction = prediction
-    else:
-        risk_level = "LOW"
-        final_prediction = prediction
+    risk_level = risk_level_for(risk_score)
+    if model_metadata.provider != "Adaption AutoScientist":
+        if risk_level in {"CRITICAL", "HIGH"}:
+            final_prediction = "FRAUDULENT"
+        else:
+            final_prediction = prediction
 
     # 5. Formulate Steps & Recommendations
     verification_steps = generate_verification_steps(signals, request.company or "")

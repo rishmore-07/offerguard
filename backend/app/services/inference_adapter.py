@@ -7,17 +7,10 @@ Supports three interchangeable backends:
 """
 import logging
 from typing import Dict, Any, Optional, Tuple
-from pathlib import Path
 import joblib
-import httpx
 
 from backend.app.config import (
     MODEL_PROVIDER,
-    AUTOSCIENTIST_API_URL,
-    AUTOSCIENTIST_API_KEY,
-    ADAPTION_API_KEY,
-    ADAPTION_EXPERIMENT_ID,
-    MODEL_TIMEOUT,
     MODEL_PATH,
     PROJECT_ROOT
 )
@@ -25,13 +18,11 @@ from backend.app.schemas import ModelMetadata
 
 logger = logging.getLogger("OfferGuard-InferenceAdapter")
 
-CHECKPOINT_DIR = PROJECT_ROOT / "ml" / "models" / "autoscientist_qwen3_5_2b"
 
-INSTRUCTION_WRAPPER = (
-    "Classify this job advertisement using only one label: "
-    "LEGITIMATE or FRAUDULENT. A label is a risk prediction, not "
-    "independent verification of a company.\n\n"
-)
+class ModelNotReady(RuntimeError):
+    """Raised when the selected trained model cannot produce a prediction."""
+
+CHECKPOINT_DIR = PROJECT_ROOT / "ml" / "models" / "autoscientist_qwen3_5_2b"
 
 
 class ModelInferenceAdapter:
@@ -58,17 +49,23 @@ class ModelInferenceAdapter:
 
     def get_metadata(self) -> ModelMetadata:
         if self.provider == "autoscientist":
-            has_remote = bool(AUTOSCIENTIST_API_URL and (AUTOSCIENTIST_API_KEY or ADAPTION_API_KEY))
-            has_local = getattr(self, "has_lora_weights", False)
-            is_configured = has_remote or has_local
-            status = "Adaption AutoScientist Qwen3.5-2B LoRA" if is_configured else "AutoScientist (Checkpoint Available)"
+            from backend.app.services.lora_predictor import local_lora_predictor
+
+            loaded = local_lora_predictor.is_loaded and local_lora_predictor.inference_verified
+            has_weights = getattr(self, "has_lora_weights", False)
+            if loaded:
+                status = "Trained Qwen3.5-2B LoRA ready"
+            elif has_weights:
+                status = "LoRA weights present; inference not verified"
+            else:
+                status = "Trained model not loaded"
             return ModelMetadata(
                 model_name="AutoScientist Qwen3.5-2B LoRA",
                 model_type="Instruction Fine-Tuned PEFT LoRA (r=48, alpha=96)",
                 provider="Adaption AutoScientist",
                 is_demo_mode=False,
                 status_label=status,
-                endpoint_configured=is_configured
+                endpoint_configured=loaded
             )
         elif self.provider == "baseline" and self.baseline_bundle is not None:
             return ModelMetadata(
@@ -97,63 +94,18 @@ class ModelInferenceAdapter:
         """
         metadata = self.get_metadata()
 
-        # 1. Adaption AutoScientist Local LoRA (if active and loaded)
-        if self.provider == "autoscientist" and getattr(self, "has_lora_weights", False):
-            try:
-                from backend.app.services.lora_predictor import local_lora_predictor
-                if not local_lora_predictor.is_loaded:
-                    logger.info("Initializing local Qwen3.5-2B LoRA model...")
-                    local_lora_predictor.load_model()
-                pred, risk = local_lora_predictor.predict(text)
-                return pred, 0.95, risk, metadata
-            except Exception as e:
-                logger.warning(f"Local LoRA inference not currently active: {e}. Falling back to baseline.")
+        # The trained LoRA model never falls through to the baseline or heuristic engines.
+        if self.provider == "autoscientist":
+            from backend.app.services.lora_predictor import local_lora_predictor
 
-        # 1b. Adaption AutoScientist Remote HTTP API
-        if self.provider == "autoscientist" and AUTOSCIENTIST_API_URL:
-            try:
-                prompt_text = INSTRUCTION_WRAPPER + text
-                api_key = ADAPTION_API_KEY or AUTOSCIENTIST_API_KEY
-                headers = {
-                    "Content-Type": "application/json",
-                    "User-Agent": "OfferGuard-AI/1.0"
-                }
-                if api_key:
-                    headers["Authorization"] = f"Bearer {api_key}"
-
-                payload = {
-                    "prompt": prompt_text,
-                    "max_tokens": 16,
-                    "temperature": 0.0
-                }
-
-                async with httpx.AsyncClient(timeout=MODEL_TIMEOUT) as client:
-                    resp = await client.post(AUTOSCIENTIST_API_URL, json=payload, headers=headers)
-                    resp.raise_for_status()
-                    data = resp.json()
-
-                completion_raw = (
-                    data.get("completion")
-                    or data.get("response")
-                    or data.get("text")
-                    or (data.get("choices", [{}])[0].get("text"))
-                    or ""
-                ).strip()
-
-                if "FRAUDULENT" in completion_raw.upper() or "FAKE" in completion_raw.upper():
-                    prediction = "FRAUDULENT"
-                    base_risk = 85.0
-                else:
-                    prediction = "LEGITIMATE"
-                    base_risk = 15.0
-
-                api_confidence = data.get("confidence")
-                confidence = float(api_confidence) if api_confidence is not None else None
-
-                return prediction, confidence, base_risk, metadata
-
-            except Exception as e:
-                logger.error(f"AutoScientist endpoint error: {e}. Falling back to baseline.")
+            if not getattr(self, "has_lora_weights", False):
+                raise ModelNotReady("Trained LoRA weights are not available on this server.")
+            if not local_lora_predictor.is_loaded:
+                logger.info("Initializing local Qwen3.5-2B LoRA model")
+                local_lora_predictor.load_model()
+            label, _confidence = local_lora_predictor.predict(text)
+            metadata = self.get_metadata()
+            return label, None, None, metadata
 
         # 2. Local Trained Baseline
         if self.baseline_bundle is not None and self.provider != "demo":

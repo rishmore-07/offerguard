@@ -1,11 +1,13 @@
 """API Endpoints for OfferGuard AI."""
 import json
 import logging
-from pathlib import Path
+import threading
+import time
+from collections import defaultdict
 from typing import List, Dict, Any
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 
-from backend.app.config import METRICS_PATH, MODEL_PROVIDER
+from backend.app.config import METRICS_PATH, MODEL_PROVIDER, PROJECT_ROOT, RATE_LIMIT_PER_MINUTE
 from backend.app.schemas import (
     JobAnalysisRequest,
     JobAnalysisResponse,
@@ -16,8 +18,32 @@ from backend.app.schemas import (
     SampleJob
 )
 from backend.app.services.analyzer import analyze_job_offer
-from backend.app.services.inference_adapter import inference_adapter
+from backend.app.services.inference_adapter import ModelNotReady, inference_adapter
 from backend.app.services.session_store import session_store
+
+_rate_lock = threading.Lock()
+_rate_hits: dict[str, list[float]] = defaultdict(list)
+LORA_EVAL_PATH = PROJECT_ROOT / "evaluation" / "evaluation_results.json"
+
+
+def enforce_rate_limit(request: Request) -> None:
+    client = request.client.host if request.client else "unknown"
+    now = time.time()
+    with _rate_lock:
+        recent = [stamp for stamp in _rate_hits[client] if now - stamp < 60]
+        if len(recent) >= RATE_LIMIT_PER_MINUTE:
+            raise HTTPException(status_code=429, detail="Too many analysis requests. Try again in a minute.")
+        recent.append(now)
+        _rate_hits[client] = recent
+
+
+def model_is_ready() -> bool:
+    if MODEL_PROVIDER == "autoscientist":
+        from backend.app.services.lora_predictor import local_lora_predictor
+        return bool(local_lora_predictor.is_loaded and local_lora_predictor.inference_verified)
+    if MODEL_PROVIDER == "baseline":
+        return inference_adapter.baseline_bundle is not None
+    return False
 
 logger = logging.getLogger("OfferGuard-API")
 router = APIRouter()
@@ -101,32 +127,58 @@ def health_check():
         "model_provider": meta.provider,
         "model_status": meta.status_label,
         "is_demo_mode": meta.is_demo_mode,
-        "endpoint_configured": meta.endpoint_configured
+        "model_ready": model_is_ready()
+    }
+
+
+@router.get("/ready")
+def readiness_check():
+    if not model_is_ready():
+        raise HTTPException(status_code=503, detail="Trained model inference is not ready.")
+    meta = inference_adapter.get_metadata()
+    return {
+        "ready": True,
+        "model_provider": meta.provider,
+        "model_status": meta.status_label
     }
 
 
 @router.post("/analyze", response_model=JobAnalysisResponse)
-async def analyze_listing(request: JobAnalysisRequest):
+async def analyze_listing(request: Request, body: JobAnalysisRequest):
+    enforce_rate_limit(request)
     try:
-        return await analyze_job_offer(request)
-    except Exception as e:
-        logger.error(f"Error during job analysis: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        return await analyze_job_offer(body)
+    except ModelNotReady as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception:
+        logger.exception("Analysis failed")
+        raise HTTPException(status_code=500, detail="Analysis failed.")
 
 
 @router.post("/batch", response_model=BatchAnalysisResponse)
-async def batch_analyze(request: BatchAnalysisRequest):
+async def batch_analyze(request: Request, body: BatchAnalysisRequest):
+    enforce_rate_limit(request)
+    request_body = body
     results = []
     fraud_count = 0
     legit_count = 0
 
-    for job in request.jobs:
-        req = JobAnalysisRequest(
-            text=job.text,
-            title=job.title,
-            source=job.source or "Batch"
-        )
-        res = await analyze_job_offer(req)
+    try:
+        analyzed = []
+        for job in request_body.jobs:
+            req = JobAnalysisRequest(
+                text=job.text,
+                title=job.title,
+                source=job.source or "Batch"
+            )
+            analyzed.append((job, await analyze_job_offer(req)))
+    except ModelNotReady as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception:
+        logger.exception("Batch analysis failed")
+        raise HTTPException(status_code=500, detail="Analysis failed.")
+
+    for job, res in analyzed:
         if res.prediction == "FRAUDULENT":
             fraud_count += 1
         else:
@@ -142,7 +194,7 @@ async def batch_analyze(request: BatchAnalysisRequest):
         })
 
     return BatchAnalysisResponse(
-        total_processed=len(request.jobs),
+        total_processed=len(request_body.jobs),
         fraudulent_count=fraud_count,
         legitimate_count=legit_count,
         results=results
@@ -187,10 +239,20 @@ def get_model_info():
     }
 
     # AutoScientist run status based on actual verification
-    if getattr(inference_adapter, "has_lora_weights", False):
-        autoscientist_status = "Trained LoRA Checkpoint Verified (ID: 07db89e9, Qwen3.5-2B, Win Rate: 63.5%)"
-    elif meta.provider == "autoscientist" and meta.endpoint_configured:
-        autoscientist_status = "Connected & Active"
+    lora_evaluation = None
+    if LORA_EVAL_PATH.exists():
+        try:
+            with open(LORA_EVAL_PATH, "r", encoding="utf-8") as handle:
+                lora_evaluation = json.load(handle)
+        except Exception:
+            logger.warning("Could not read LoRA evaluation results")
+
+    if model_is_ready() and meta.provider == "Adaption AutoScientist":
+        autoscientist_status = "Trained Qwen3.5-2B LoRA inference verified"
+    elif getattr(inference_adapter, "has_lora_weights", False):
+        autoscientist_status = "Trained LoRA checkpoint present; inference is not hosted on this service"
+    elif lora_evaluation and lora_evaluation.get("complete"):
+        autoscientist_status = "Held-out evaluation measured locally. This service does not have the model weights loaded."
     else:
         autoscientist_status = "Awaiting trained model"
 
@@ -201,5 +263,6 @@ def get_model_info():
         autoscientist_status=autoscientist_status,
         dataset_overview=dataset_overview,
         baseline_metrics=baseline_data,
-        evaluation_methodology="Stratified 70/15/15 train/val/test split with zero text leakage. Optimization prioritized Fraud Recall and Fraud F1-Score on imbalanced holdout."
+        lora_evaluation=lora_evaluation,
+        evaluation_methodology="Held-out labels are never model inputs. LoRA metrics come only from completed deterministic predictions. The Adaption win rate is not accuracy."
     )

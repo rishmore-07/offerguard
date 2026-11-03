@@ -6,8 +6,9 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 PROJECT_ROOT = BASE_DIR.parent
 
-# Load .env file
+# Load .env files. backend/.env is the local secret store and is never committed.
 load_dotenv(PROJECT_ROOT / ".env")
+load_dotenv(BASE_DIR / ".env")
 
 # Paths
 DEFAULT_MODEL_PATH = PROJECT_ROOT / "ml" / "models" / "offerguard_baseline.joblib"
@@ -38,14 +39,18 @@ MIN_INPUT_LENGTH = int(os.getenv("MIN_INPUT_LENGTH", "10"))
 
 HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", 8000))
-CORS_ORIGINS = [
+_DEFAULT_CORS = [
     "http://localhost:5173",
     "http://localhost:5174",
     "http://localhost:3000",
-    "http://localhost:8080",
     "http://127.0.0.1:5173",
     "http://127.0.0.1:5174",
     "http://127.0.0.1:3000",
-    "https://offerguard.vercel.app",
-    "*"
 ]
+_extra_origins = [
+    origin.strip()
+    for origin in os.getenv("CORS_ORIGINS", "").split(",")
+    if origin.strip() and origin.strip() != "*"
+]
+CORS_ORIGINS = list(dict.fromkeys(_DEFAULT_CORS + _extra_origins))
+RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "30"))

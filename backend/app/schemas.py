@@ -78,6 +78,7 @@ class ModelInfoResponse(BaseModel):
     autoscientist_status: str
     dataset_overview: Dict[str, Any]
     baseline_metrics: Optional[Dict[str, Any]]
+    lora_evaluation: Optional[Dict[str, Any]] = None
     evaluation_methodology: str
 
 

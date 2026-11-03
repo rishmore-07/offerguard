@@ -11,6 +11,7 @@
 *.pt
 *.zip
 ml/models/autoscientist_qwen3_5_2b/
+evaluation/predictions_partial_*.jsonl
 model_adapter/
 
 # Raw large datasets (>50MB)

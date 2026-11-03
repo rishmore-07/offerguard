@@ -105,7 +105,8 @@ class TestOfferGuardBackend(unittest.TestCase):
         data = resp.json()
         self.assertIn("dataset_overview", data)
         self.assertIn("autoscientist_status", data)
-        self.assertIn(data["autoscientist_status"], ["Awaiting trained model", "Connected & Active"])
+        self.assertTrue(data["autoscientist_status"])
+        self.assertNotIn("63.5", data["autoscientist_status"])
         self.assertIn("baseline_metrics", data)
 
     def test_samples_endpoint(self):

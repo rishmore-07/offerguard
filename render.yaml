@@ -1,22 +1,37 @@
+# Free-tier Render layout. The Qwen3.5-2B LoRA weights are not in Git.
+# This API stays honest: it reports the trained model as not ready until a
+# host with enough memory is actually running inference.
 services:
   - type: web
     name: offerguard-api
-    env: python
-    region: oregon
+    runtime: python
+    region: singapore
     plan: free
-    buildCommand: "pip install -r backend/requirements.txt"
-    startCommand: "python backend/run.py"
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: python backend/run.py
+    healthCheckPath: /api/health
     envVars:
-      - key: PORT
-        value: 10000
       - key: HOST
         value: 0.0.0.0
       - key: MODEL_PROVIDER
-        value: baseline
-      - key: AUTOSCIENTIST_API_URL
-        sync: false
-      - key: AUTOSCIENTIST_API_KEY
-        sync: false
+        value: autoscientist
       - key: MODEL_TIMEOUT
-        value: 10.0
+        value: "60"
+      - key: PYTHON_VERSION
+        value: "3.12.8"
+      - key: CORS_ORIGINS
+        sync: false
 
+  - type: web
+    name: offerguard-web
+    runtime: static
+    buildCommand: cd frontend && npm ci && npm run build
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: VITE_API_BASE_URL
+        fromService:
+          name: offerguard-api
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL

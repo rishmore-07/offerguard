@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(PROJECT_ROOT / ".env")
+load_dotenv(PROJECT_ROOT / "backend" / ".env")
 
 API_KEY = os.getenv("ADAPTION_API_KEY")
 EXPERIMENT_ID = os.getenv("ADAPTION_EXPERIMENT_ID", "07db89e9-7722-4897-9c2f-fc384482dc91")
