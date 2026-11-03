@@ -105,7 +105,32 @@ npm run dev
 
 ---
 
-## 📊 Empirical Baseline Performance Summary
+## Production model
+
+The live API serves `ml/models/offerguard_baseline.joblib`: TF-IDF with 15,000 word unigrams and bigrams, class-weighted logistic regression, decision threshold 0.62, scikit-learn 1.9.1. It does not load the Qwen LoRA.
+
+### Independent holdout, `offerguard_clean_test.csv` (N = 2,291, 106 fraudulent)
+
+Measured with scikit-learn 1.9.1. Training and threshold-validation text overlap with this file was 0. These numbers are the logistic regression, not AutoScientist.
+
+- **Accuracy**: 98.12%
+- **Fraud precision**: 85.39%
+- **Fraud recall**: 71.70% (76 / 106)
+- **Fraud F1**: 77.95%
+- **Macro F1**: 88.48%
+- **Confusion counts**: TN 2,172, FP 13, FN 30, TP 76
+
+The full record is `evaluation/lightweight_baseline_holdout.json`.
+
+### Separate Qwen3.5-2B LoRA evaluation (not deployed)
+
+Same 2,291-row file, recorded in `evaluation/evaluation_results.json`: accuracy 95.68%, fraud precision 52.15%, fraud recall 80.19%, fraud F1 63.20%. The Adaption win rate is not accuracy.
+
+Older EMSCAD and synthetic-split figures remain in `ml/metrics/baseline_evaluation.json`. They are a different test and are not the production holdout.
+
+Raw listing CSVs stay out of Git because the advertisement text contains contact details. The classifier artifact does not include those rows.
+
+## 📊 Earlier EMSCAD split, kept for provenance
 
 ### EMSCAD Real-World Test Holdout ($N = 2,363$, 107 Fraudulent)
 *Evaluated on real-world job postings at optimal threshold ($th=0.62$):*
@@ -124,17 +149,7 @@ npm run dev
 
 ---
 
-## 🚀 Adaption AutoScientist Protocol
+The Qwen3.5-2B LoRA was evaluated separately and is not the model answering the live site. Do not point the Render service at `backend/requirements-inference.txt`.
 
-To prevent accidental credit consumption during development, `ml/train_adaption.py` includes a verification mode:
-```bash
-# Verify dataset schema and columns without spending credits
-python ml/train_adaption.py --check-only
-
-# Launch paid AutoScientist training (when credit authorization is granted)
-$env:ADAPTION_API_KEY="YOUR_KEY"
-python ml/train_adaption.py
-```
-
-See [docs/MODEL_CARD.md](docs/MODEL_CARD.md) and [docs/DATASET_PROVENANCE.md](docs/DATASET_PROVENANCE.md) for full details.
+See [docs/MODEL_CARD.md](docs/MODEL_CARD.md) and [docs/DATASET_PROVENANCE.md](docs/DATASET_PROVENANCE.md) for the original split documentation.
 

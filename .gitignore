@@ -18,6 +18,13 @@ model_adapter/
 fake_job_postings.csv
 **/fake_job_postings.csv
 
+# Job-ad text contains contact details. The deployed classifier is the joblib.
+ml/data/*.csv
+OfferGuard_India/*.csv
+/offerguard_adaption_train.csv
+/offerguard_clean_test.csv
+/offerguard_validation.csv
+
 # Python
 __pycache__/
 *.py[cod]

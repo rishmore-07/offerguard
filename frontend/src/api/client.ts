@@ -22,15 +22,27 @@ export async function analyzeJob(
   salary?: string,
   source?: string
 ): Promise<JobAnalysisResponse> {
-  const resp = await fetch(`${API_BASE}/analyze`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, title, company, salary, source }),
-  });
+  let resp: Response;
+  try {
+    resp = await fetch(`${API_BASE}/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, title, company, salary, source }),
+    });
+  } catch {
+    throw new Error('Could not reach the analysis service. Check your connection and try again.');
+  }
 
   if (!resp.ok) {
-    const errorData = await resp.json().catch(() => ({ detail: 'Analysis failed' }));
-    throw new Error(errorData.detail || `Server returned status ${resp.status}`);
+    const errorData = await resp.json().catch(() => ({ detail: '' }));
+    const detail = typeof errorData.detail === 'string' ? errorData.detail : '';
+    if (resp.status === 503) {
+      throw new Error(detail || 'The trained classifier is not available right now. Try again in a moment.');
+    }
+    if (resp.status === 429) {
+      throw new Error(detail || 'Too many scans. Wait a minute and try again.');
+    }
+    throw new Error(detail || `Analysis failed (${resp.status}).`);
   }
 
   return resp.json();

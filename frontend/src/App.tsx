@@ -9,8 +9,22 @@ import { fetchSamples, fetchSessionStats, fetchModelInfo } from './api/client';
 import type { SampleJob, SessionStatsResponse, ModelInfoResponse } from './types';
 import { ShieldAlert, ArrowUpRight } from 'lucide-react';
 
+const TAB_PATHS: Record<NavTab, string> = {
+  home: '/',
+  scanner: '/scanner',
+  threats: '/threats',
+  model: '/model',
+  guide: '/directory',
+};
+
+function tabFromPath(pathname: string): NavTab {
+  const path = pathname.replace(/\/+$/, '') || '/';
+  const match = (Object.entries(TAB_PATHS) as Array<[NavTab, string]>).find(([, route]) => route === path);
+  return match?.[0] ?? 'home';
+}
+
 export function App() {
-  const [activeTab, setActiveTab] = useState<NavTab>('home');
+  const [activeTab, setActiveTab] = useState<NavTab>(() => tabFromPath(window.location.pathname));
   const [samples, setSamples] = useState<SampleJob[]>([]);
   const [sessionStats, setSessionStats] = useState<SessionStatsResponse>({
     total_analyzed: 0,
@@ -45,11 +59,25 @@ export function App() {
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    const onPopState = () => setActiveTab(tabFromPath(window.location.pathname));
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  const openTab = (tab: NavTab) => {
+    const path = TAB_PATHS[tab];
+    if (window.location.pathname !== path) {
+      window.history.pushState({ tab }, '', path);
+    }
+    setActiveTab(tab);
+  };
+
   const handleStartAnalysis = (sample?: SampleJob) => {
     if (sample) {
       setSelectedSample(sample);
     }
-    setActiveTab('scanner');
+    openTab('scanner');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -58,7 +86,7 @@ export function App() {
     if (el) {
       el.scrollIntoView({ behavior: 'smooth' });
     } else {
-      setActiveTab('guide');
+      openTab('guide');
     }
   };
 
@@ -66,9 +94,9 @@ export function App() {
     <div className="min-h-screen bg-[#FAF9F6] text-[#111111] flex flex-col font-sans selection:bg-[#FFE45E] selection:text-[#111111] bg-neo-grid">
       <Header
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={openTab}
         modelStatus={modelInfo?.model_status}
-        isDemoMode={modelInfo?.model_name.includes('Heuristic')}
+        isDemoMode={modelInfo?.model_name?.includes('Heuristic')}
       />
 
       <main className="flex-1 max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
@@ -126,13 +154,13 @@ export function App() {
 
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-2.5 py-1 rounded bg-[#FFE45E] border-2 border-[#111111] font-mono font-bold text-[11px] shadow-[1.5px_1.5px_0px_#111111]">
-                FastAPI Local Engine
+                Live model: TF-IDF logistic regression
               </span>
               <span className="px-2.5 py-1 rounded bg-[#FFD6E8] border-2 border-[#111111] font-mono font-bold text-[11px] shadow-[1.5px_1.5px_0px_#111111]">
                 React 19 + TypeScript
               </span>
               <span className="px-2.5 py-1 rounded bg-[#E9DDFF] border-2 border-[#111111] font-mono font-bold text-[11px] shadow-[1.5px_1.5px_0px_#111111]">
-                Adaption AutoScientist Ready
+                Qwen LoRA: research only, not live
               </span>
             </div>
           </div>
